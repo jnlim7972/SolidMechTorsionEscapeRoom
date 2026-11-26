@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grandview Galleria: Torsional Integrity Escape Room</title>
+  <style>
+    /* ==========================================================================
+       CSS Variables & Base Reset
+       ========================================================================== */
+    :root {
+      --bg-dark: #0f1419;
+      --bg-panel: rgba(20, 27, 34, 0.92);
+      --bg-card: #1b242e;
+      --bg-card-hover: #24303d;
+      --border-subtle: #334252;
+      --accent-amber: #f59e0b;
+      --accent-amber-hover: #d97706;
+      --accent-cyan: #38bdf8;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.65);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      transition: background-image 0.4s ease-in-out;
+    }
+
+    /* Dark overlay over background images for high text contrast (WCAG AA/AAA) */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(11, 15, 20, 0.78) 0%, rgba(11, 15, 20, 0.88) 100%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Focus outline for keyboard navigation accessibility */
+    :focus-visible {
+      outline: 3px solid var(--accent-cyan);
+      outline-offset: 2px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ==========================================================================
+       Top HUD (Heads-Up Display) Bar
+       ========================================================================== */
+    .hud-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: rgba(15, 20, 25, 0.96);
+      border-bottom: 2px solid var(--border-subtle);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .hud-bar.hidden {
+      display: none;
+    }
+
+    .hud-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--accent-amber);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .hud-stats {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      color: var(--accent-cyan);
+    }
+
+    .stat-value.warning {
+      color: var(--accent-amber);
+    }
+
+    .stat-value.danger {
+      color: var(--accent-red);
+    }
+
+    .progress-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .progress-track {
+      width: 100px;
+      height: 10px;
+      background: #0b0f14;
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-green);
+      transition: width 0.35s ease;
+    }
+
+    .hud-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ==========================================================================
+       Buttons & Inputs
+       ========================================================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.65rem 1.25rem;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s, border-color 0.2s;
+      text-decoration: none;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-amber);
+      color: #0f1419;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--accent-amber-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-card);
+      color: var(--text-primary);
+      border-color: var(--border-subtle);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: var(--bg-card-hover);
+      border-color: var(--text-muted);
+    }
+
+    .btn-success {
+      background-color: var(--accent-green);
+      color: #062118;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background-color: #059669;
+    }
+
+    .btn-danger {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border-color: var(--accent-red);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-sm {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    /* ==========================================================================
+       Main Container & Screen Layout
+       ========================================================================== */
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .screen {
+      display: none;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow-lg);
+      animation: fadeIn 0.3s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 3.5vw, 2.4rem);
+      color: var(--accent-amber);
+      margin-bottom: 0.5rem;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      color: var(--accent-cyan);
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ==========================================================================
+       Start Screen
+       ========================================================================== */
+    .start-hero {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .story-box {
+      background: rgba(15, 20, 25, 0.8);
+      border-left: 4px solid var(--accent-amber);
+      padding: 1.25rem;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      text-align: left;
+      margin: 1.5rem 0;
+    }
+
+    /* ==========================================================================
+       Instructions Screen
+       ========================================================================== */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .rule-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.15rem;
+    }
+
+    .rule-card h3 {
+      font-size: 1.05rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .rule-card p {
+      font-size: 0.92rem;
+      margin-bottom: 0;
+    }
+
+    /* ==========================================================================
+       Navigation Map & Document Reconstruction
+       ========================================================================== */
+    .rooms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    .room-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .room-card.completed {
+      border-color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .room-card.locked {
+      border-color: #475569;
+      opacity: 0.85;
+    }
+
+    .room-status {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: inline-block;
+    }
+
+    .status-open { color: var(--accent-cyan); }
+    .status-done { color: var(--accent-green); }
+    .status-locked { color: var(--accent-amber); }
+
+    /* Document Reconstruction Workbench */
+    .workbench {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: rgba(11, 15, 20, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+    }
+
+    .fragments-stage {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.25rem 0;
+      padding: 1rem;
+      background: #0b0f14;
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-md);
+      min-height: 170px;
+    }
+
+    /* Visually join both fragments side-by-side when both are collected */
+    .fragments-stage.joined {
+      gap: 0;
+      border-style: solid;
+      border-color: var(--accent-amber);
+      background: #141a21;
+    }
+
+    .fragment-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 180px;
+      min-height: 140px;
+      padding: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .fragments-stage.joined .fragment-slot {
+      padding: 0;
+      min-width: auto;
+    }
+
+    .fragment-img {
+      max-width: 240px;
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 4px;
+    }
+
+    .fragments-stage.joined .fragment-img {
+      border-radius: 0;
+    }
+
+    .img-fallback-box {
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 1rem;
+      border: 2px dashed #475569;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      max-width: 240px;
+      text-align: left;
+    }
+
+    .code-entry-box {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .code-input {
+      width: 140px;
+      padding: 0.65rem;
+      font-size: 1.35rem;
+      font-family: var(--font-mono);
+      text-align: center;
+      letter-spacing: 0.25em;
+      background: #0f1419;
+      color: var(--text-primary);
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .code-input:focus {
+      border-color: var(--accent-amber);
+    }
+
+    /* ==========================================================================
+       Room Question Cards & Interactive Controls
+       ========================================================================== */
+    .room-header {
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .objective-banner {
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 3px solid var(--accent-cyan);
+      padding: 0.65rem 1rem;
+      font-size: 0.92rem;
+      color: var(--text-primary);
+      margin-top: 0.75rem;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .question-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .question-card.solved {
+      border-color: var(--accent-green);
+    }
+
+    .q-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .q-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      background: #0f1419;
+      color: var(--accent-amber);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .q-solved-tag {
+      color: var(--accent-green);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .formula-note {
+      font-family: var(--font-mono);
+      background: rgba(15, 20, 25, 0.75);
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.92em;
+      color: #e2e8f0;
+    }
+
+    /* Text input for Short Answer */
+    .text-answer-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+
+    .text-input {
+      padding: 0.6rem 0.9rem;
+      font-size: 1rem;
+      font-family: var(--font-mono);
+      background: #0f1419;
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      width: 200px;
+    }
+
+    /* Checkboxes & Radio options */
+    .option-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin: 1rem 0;
+    }
+
+    .option-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: rgba(15, 20, 25, 0.7);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .option-label:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(36, 48, 61, 0.8);
+    }
+
+    .option-label input {
+      margin-top: 0.3rem;
+      accent-color: var(--accent-amber);
+      width: 1.1rem;
+      height: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    /* Matching Grid */
+    .matching-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin: 1rem 0;
+    }
+
+    .match-row {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 0.75rem;
+      align-items: center;
+      background: rgba(15, 20, 25, 0.7);
+      padding: 0.75rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+    }
+
+    @media (max-width: 680px) {
+      .match-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .styled-select {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #0f1419;
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    /* Inline Dropdown Cloze Paragraph */
+    .cloze-paragraph {
+      background: rgba(15, 20, 25, 0.8);
+      padding: 1.15rem;
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--accent-amber);
+      line-height: 2;
+      margin: 1rem 0;
+      color: var(--text-primary);
+    }
+
+    .inline-select {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: #1e293b;
+      color: var(--accent-cyan);
+      border: 1px solid var(--accent-cyan);
+      border-radius: 4px;
+      margin: 0 0.2rem;
+    }
+
+    /* Sequencing List */
+    .sequence-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin: 1rem 0;
+    }
+
+    .sequence-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      background: rgba(15, 20, 25, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+    }
+
+    .seq-num {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent-amber);
+      margin-right: 0.5rem;
+    }
+
+    .seq-controls {
+      display: flex;
+      gap: 0.35rem;
+      flex-shrink: 0;
+    }
+
+    /* Hints & Feedback Boxes */
+    .q-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .hint-box {
+      display: none;
+      margin-top: 0.85rem;
+      padding: 0.75rem 1rem;
+      background: rgba(245, 158, 11, 0.12);
+      border-left: 3px solid var(--accent-amber);
+      border-radius: 0 4px 4px 0;
+      font-size: 0.92rem;
+      color: #fde68a;
+    }
+
+    .hint-box.visible {
+      display: block;
+    }
+
+    .feedback-box {
+      display: none;
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+    }
+
+    .feedback-box.visible {
+      display: block;
+    }
+
+    .feedback-box.correct {
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid var(--accent-green);
+      color: #d1fae5;
+    }
+
+    .feedback-box.incorrect {
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid var(--accent-red);
+      color: #fee2e2;
+    }
+
+    /* Room Fragment Reveal Panel */
+    .fragment-reveal-panel {
+      display: none;
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 2px solid var(--accent-green);
+      border-radius: var(--radius-lg);
+      text-align: center;
+    }
+
+    .fragment-reveal-panel.visible {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .fragment-reveal-panel img {
+      max-width: 280px;
+      margin: 1rem auto;
+      border: 2px solid var(--accent-amber);
+      border-radius: 6px;
+      display: block;
+    }
+
+    /* ==========================================================================
+       Completion & Game Over Screens
+       ========================================================================== */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .summary-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+
+    .summary-stat .val {
+      font-size: 1.65rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      display: block;
+    }
+
+    .center-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       Top Status Bar (HUD)
+       ======================================================================== -->
+  <header id="hud-bar" class="hud-bar hidden" role="region" aria-label="Game Status and Controls">
+    <div class="hud-title">Grandview Galleria Inspection</div>
+
+    <div class="hud-stats">
+      <div class="stat-badge" aria-label="Time Remaining">
+        <span>Time:</span>
+        <span id="hud-timer" class="stat-value">20:00</span>
+      </div>
+
+      <div class="stat-badge" aria-label="Life Points">
+        <span>Life Points:</span>
+        <span id="hud-life" class="stat-value">100</span>
+      </div>
+
+      <div class="progress-wrapper" aria-label="Mission Progress">
+        <span id="hud-progress-text">0/3 Rooms</span>
+        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="hud-progress-bar">
+          <div class="progress-fill" id="hud-progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud-controls">
+      <button type="button" id="btn-mute" class="btn btn-secondary btn-sm" aria-pressed="false">
+        Sound: On
+      </button>
+      <button type="button" id="btn-hud-restart" class="btn btn-danger btn-sm">
+        Restart
+      </button>
+    </div>
+  </header>
+
+  <!-- Live region for screen reader announcements -->
+  <div id="sr-announcer" class="sr-only" aria-live="polite"></div>
+
+  <main>
+    <!-- ======================================================================
+         SCREEN 1: START SCREEN
+         ====================================================================== -->
+    <section id="screen-start" class="screen active" aria-labelledby="start-title">
+      <div class="start-hero">
+        <span class="tag">Solid Mechanics &bull; Torsion in Shafts</span>
+        <h1 id="start-title">Grandview Galleria: Torsional Integrity</h1>
+        <p class="subtitle">An Interactive Mechanical Engineering Escape Room</p>
+
+        <div class="story-box">
+          <p>
+            You are a Year 2 structural and mechanical inspection intern trapped inside <strong>Grandview Galleria</strong>, a massive abandoned shopping mall slated for demolition.
+          </p>
+          <p style="margin-bottom: 0;">
+            A sudden grid surge has triggered the emergency blast shutters, sealing every exit. To restore auxiliary power and unlock the main exit, you must inspect the mall's decaying mechanical drive shafts and verify their torsional integrity before restarting the system.
+          </p>
+        </div>
+
+        <button type="button" id="btn-start" class="btn btn-primary" style="font-size: 1.15rem; padding: 0.85rem 2rem;">
+          Start Inspection
+        </button>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 2: INSTRUCTIONS SCREEN
+         ====================================================================== -->
+    <section id="screen-instructions" class="screen" aria-labelledby="inst-title">
+      <span class="tag">Mission Briefing</span>
+      <h2 id="inst-title">How to Escape Grandview Galleria</h2>
+      <p>
+        Your objective is to analyse torsional shear stress, angle of twist, and shaft sizing criteria across three mechanical zones to safely restore power.
+      </p>
+
+      <div class="rules-grid">
+        <div class="rule-card">
+          <h3>1. Three-Room Structure</h3>
+          <p>
+            <strong>Room 1</strong> (Atrium Escalator Pit) and <strong>Room 2</strong> (Service Corridor &amp; Freight Elevator) are open immediately and can be completed in either order. <strong>Room 3</strong> (Rooftop HVAC Control Room) is locked at the start.
+          </p>
+        </div>
+
+        <div class="rule-card">
+          <h3>2. Timer &amp; Life Points</h3>
+          <p>
+            You have <strong>20 minutes</strong> and <strong>100 Life Points</strong>. Each incorrect answer deducts <strong>10 Life Points</strong>. If time expires or Life Points reach zero, the security lockdown becomes permanent.
+          </p>
+        </div>
+
+        <div class="rule-card">
+          <h3>3. Document Reconstruction</h3>
+          <p>
+            Completing Room 1 reveals <strong>Document Fragment 1</strong>; completing Room 2 reveals <strong>Document Fragment 2</strong>. Combine both fragments on the Navigation Map to uncover the 4-digit keypad code for Room 3.
+          </p>
+        </div>
+
+        <div class="rule-card">
+          <h3>4. Hints &amp; Feedback</h3>
+          <p>
+            Optional hints are available on every challenge without penalty. All questions provide immediate engineering feedback to guide your calculations.
+          </p>
+        </div>
+      </div>
+
+      <div class="center-actions">
+        <button type="button" id="btn-to-map" class="btn btn-primary">
+          Continue to Facility Map
+        </button>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 3: NAVIGATION MAP & DOCUMENT RECONSTRUCTION
+         ====================================================================== -->
+    <section id="screen-map" class="screen" aria-labelledby="map-title">
+      <span class="tag">Facility Map</span>
+      <h2 id="map-title">Grandview Galleria Mechanical Zones</h2>
+      <p>Select an accessible mechanical room to inspect its shaft assemblies, or reconstruct collected maintenance fragments below.</p>
+
+      <div class="rooms-grid">
+        <!-- Room 1 Card -->
+        <article class="room-card" id="card-room1">
+          <div>
+            <span class="room-status status-open" id="status-room1">Accessible</span>
+            <h3>Room 1: The Atrium Escalator Pit</h3>
+            <p style="font-size: 0.92rem;">
+              Analyse torsional shear stress and angle of twist in the solid circular escalator drive shaft.
+            </p>
+          </div>
+          <button type="button" class="btn btn-primary" id="btn-enter-room1">
+            Enter Room 1
+          </button>
+        </article>
+
+        <!-- Room 2 Card -->
+        <article class="room-card" id="card-room2">
+          <div>
+            <span class="room-status status-open" id="status-room2">Accessible</span>
+            <h3>Room 2: Service Corridor &amp; Freight Elevator</h3>
+            <p style="font-size: 0.92rem;">
+              Evaluate hollow vs. solid shafts, stress concentrations, and ductile vs. brittle failure modes.
+            </p>
+          </div>
+          <button type="button" class="btn btn-primary" id="btn-enter-room2">
+            Enter Room 2
+          </button>
+        </article>
+
+        <!-- Room 3 Card -->
+        <article class="room-card locked" id="card-room3">
+          <div>
+            <span class="room-status status-locked" id="status-room3">Locked (Requires 4-Digit Code)</span>
+            <h3>Room 3: Rooftop HVAC Control Room</h3>
+            <p style="font-size: 0.92rem;">
+              Final Challenge: Size a replacement solid steel shaft against strength and stiffness failure criteria.
+            </p>
+          </div>
+          <button type="button" class="btn btn-secondary" id="btn-enter-room3" disabled>
+            Locked
+          </button>
+        </article>
+      </div>
+
+      <!-- Document Reconstruction & Keypad Section -->
+      <section class="workbench" aria-labelledby="recon-title">
+        <h3 id="recon-title">Maintenance Document Reconstruction &amp; Security Keypad</h3>
+        <p style="font-size: 0.92rem;">
+          Collect both torn document fragments from Rooms 1 and 2 to join them together and reveal the four-digit override code.
+        </p>
+
+        <div class="fragments-stage" id="fragments-stage">
+          <div class="fragment-slot" id="slot-frag1">
+            <span>Fragment 1 Missing (Complete Room 1)</span>
+          </div>
+          <div class="fragment-slot" id="slot-frag2">
+            <span>Fragment 2 Missing (Complete Room 2)</span>
+          </div>
+        </div>
+
+        <!-- Accessible text equivalent shown ONLY after both fragments are collected -->
+        <div id="accessible-clue-box" class="objective-banner" style="display: none;" role="region" aria-label="Reconstructed Document Text">
+          <strong>Reconstructed Document Text:</strong><br />
+          Fragment 1: <em>"Grandview Maintenance Log — Escalator Drive Unit #4. Emergency override prefix confirmed: <strong>48</strong>__"</em><br />
+          Fragment 2: <em>"Grandview Electrical Schematic — Sub-Panel B. Override suffix verified: __<strong>19</strong>"</em><br />
+          Combined Override Code: <strong>4819</strong>
+        </div>
+
+        <form id="code-form" class="code-entry-box" aria-label="Room 3 Four-Digit Security Keypad">
+          <label for="keypad-input" class="sr-only">Enter 4-digit Room 3 unlock code</label>
+          <input
+            type="text"
+            id="keypad-input"
+            class="code-input"
+            maxlength="4"
+            inputmode="numeric"
+            pattern="[0-9]{4}"
+            placeholder="----"
+            aria-describedby="keypad-feedback"
+          />
+          <button type="submit" class="btn btn-primary" id="btn-unlock-room3">
+            Unlock Room 3
+          </button>
+        </form>
+        <p id="keypad-feedback" style="text-align: center; margin-top: 0.65rem; margin-bottom: 0; font-weight: 600;" aria-live="polite"></p>
+      </section>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 4: ROOM 1 (THE ATRIUM ESCALATOR PIT)
+         ====================================================================== -->
+    <section id="screen-room1" class="screen" aria-labelledby="r1-title">
+      <div class="room-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <span class="tag">Room 1 of 3</span>
+          <button type="button" class="btn btn-secondary btn-sm btn-back-map">Back to Map</button>
+        </div>
+        <h2 id="r1-title">The Atrium Escalator Pit</h2>
+        <p>
+          Beneath the shattered glass dome of the central atrium lies the exposed drive assembly of the main escalator. The motor nameplate is intact, and the solid steel drive shaft shows signs of surface wear. You must analyze the torsional shear stress and twist to determine if the shaft can safely spin up without yielding.
+        </p>
+        <div class="objective-banner">
+          <strong>Learning Objective:</strong> Analyse torsional shear stress and angle of twist in a solid circular shaft under applied torque.
+        </div>
+      </div>
+
+      <!-- Question 1.1: Short Text Answer -->
+      <article class="question-card" id="q1-1-card">
+        <div class="q-header">
+          <span class="q-badge">Question 1.1 &bull; Short Text Answer</span>
+          <span class="q-solved-tag" id="q1-1-status"></span>
+        </div>
+        <p>
+          The escalator drive motor delivers <strong>15 kW</strong> of power at a constant rotational speed of <strong>120 rpm</strong>. The solid circular steel shaft has a diameter of <strong>40 mm</strong>. Calculate the maximum torsional shear stress (<span class="formula-note">&tau;<sub>max</sub></span>) developed in the shaft in <strong>MPa</strong> (round to one decimal place).
+        </p>
+
+        <div class="text-answer-row">
+          <label for="q1-1-input" class="sr-only">Maximum shear stress in MPa</label>
+          <input type="text" id="q1-1-input" class="text-input" placeholder="e.g. 85.4" />
+          <span>MPa</span>
+        </div>
+
+        <div class="q-actions">
+          <button type="button" class="btn btn-primary" id="btn-submit-q1-1">Submit Answer</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-hint="hint-q1-1">Need a Hint?</button>
+        </div>
+
+        <div id="hint-q1-1" class="hint-box">
+          <strong>Hint:</strong> First convert rotational speed to rad/s (<span class="formula-note">&omega; = 2&pi;N / 60</span>) and find torque <span class="formula-note">T = P / &omega;</span>. Then apply <span class="formula-note">&tau;<sub>max</sub> = 16T / (&pi;d&sup3;)</span>.
+        </div>
+
+        <div id="fb-q1-1" class="feedback-box" role="alert"></div>
+      </article>
+
+      <!-- Question 1.2: Multiple Selection -->
+      <article class="question-card" id="q1-2-card">
+        <div class="q-header">
+          <span class="q-badge">Question 1.2 &bull; Multiple Selection</span>
+          <span class="q-solved-tag" id="q1-2-status"></span>
+        </div>
+        <p>
+          To prevent the escalator steps from jamming against the comb plate, the angle of twist (<span class="formula-note">&phi;</span>) must remain small. Which of the following modifications would <strong>reduce</strong> the angle of twist for the same applied torque? <em>(Select all that apply)</em>
+        </p>
+
+        <div class="option-list" id="q1-2-options">
+          <label class="option-label">
+            <input type="checkbox" name="q1-2" value="A" />
+            <span>A. Replacing the steel shaft (G = 77 GPa) with an aluminum shaft (G = 26 GPa) of identical dimensions</span>
+          </label>
+          <label class="option-label">
+            <input type="checkbox" name="q1-2" value="B" />
+            <span>B. Increasing the shaft diameter from 40 mm to 50 mm</span>
+          </label>
+          <label class="option-label">
+            <input type="checkbox" name="q1-2" value="C" />
+            <span>C. Shortening the unsupported length of the drive shaft between the motor and gearbox</span>
+          </label>
+          <label class="option-label">
+            <input type="checkbox" name="q1-2" value="D" />
+            <span>D. Boring a concentric hollow hole through the center of the existing 40 mm shaft</span>
+          </label>
+        </div>
+
+        <div class="q-actions">
+          <button type="button" class="btn btn-primary" id="btn-submit-q1-2">Submit Selection</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-hint="hint-q1-2">Need a Hint?</button>
+        </div>
+
+        <div id="hint-q1-2" class="hint-box">
+          <strong>Hint:</strong> Examine the angle of twist equation <span class="formula-note">&phi; = TL / (JG)</span>. To reduce <span class="formula-note">&phi;</span>, you must either decrease the numerator (<span class="formula-note">T, L</span>) or increase the denominator (<span class="formula-note">J, G</span>).
+        </div>
+
+        <div id="fb-q1-2" class="feedback-box" role="alert"></div>
+      </article>
+
+      <!-- Room 1 Fragment Reward -->
+      <div id="room1-reward" class="fragment-reveal-panel" role="region" aria-label="Room 1 Completion Reward">
+        <h3>Room 1 Complete — Maintenance Document Fragment 1 Recovered!</h3>
+        <p>You found a torn maintenance log tucked inside the escalator control cabinet.</p>
+        <div id="room1-frag-container"></div>
+        <button type="button" class="btn btn-success btn-back-map">Back to Map</button>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 5: ROOM 2 (SERVICE CORRIDOR & FREIGHT ELEVATOR)
+         ====================================================================== -->
+    <section id="screen-room2" class="screen" aria-labelledby="r2-title">
+      <div class="room-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <span class="tag">Room 2 of 3</span>
+          <button type="button" class="btn btn-secondary btn-sm btn-back-map">Back to Map</button>
+        </div>
+        <h2 id="r2-title">The Service Corridor &amp; Freight Elevator</h2>
+        <p>
+          Down a flickering service hallway, you find the mechanical room for the heavy-duty freight elevator. The drive assembly uses a stepped shaft with a keyway and a hollow transmission tube. Before energizing this circuit, you must evaluate stress concentrations, hollow shaft efficiency, and torsional failure modes.
+        </p>
+        <div class="objective-banner">
+          <strong>Learning Objective:</strong> Compare torsional behavior in solid vs. hollow shafts, account for stress concentrations, and identify ductile vs. brittle torsional failure modes.
+        </div>
+      </div>
+
+      <!-- Question 2.1: Matching -->
+      <article class="question-card" id="q2-1-card">
+        <div class="q-header">
+          <span class="q-badge">Question 2.1 &bull; Concept Matching</span>
+          <span class="q-solved-tag" id="q2-1-status"></span>
+        </div>
+        <p>
+          Match each shaft design feature or material condition on the left with its correct mechanical consequence under pure torsion on the right.
+        </p>
+
+        <div class="matching-grid">
+          <div class="match-row">
+            <label for="match-1"><strong>1. Brittle cast-iron shaft loaded to failure</strong></label>
+            <select id="match-1" class="styled-select">
+              <option value="">-- Select consequence --</option>
+              <option value="shear_transverse">Shears along a transverse plane perpendicular to the longitudinal axis</option>
+              <option value="helix_45">Fractures along a 45&deg; helicoidal plane due to maximum tensile normal stress</option>
+              <option value="higher_j">Provides a higher polar moment of inertia (J) and greater torque capacity</option>
+              <option value="kt_factor">Requires a torsional stress concentration factor (Kt) to find peak shear stress</option>
+            </select>
+          </div>
+
+          <div class="match-row">
+            <label for="match-2"><strong>2. Ductile low-carbon steel shaft loaded to failure</strong></label>
+            <select id="match-2" class="styled-select">
+              <option value="">-- Select consequence --</option>
+              <option value="shear_transverse">Shears along a transverse plane perpendicular to the longitudinal axis</option>
+              <option value="helix_45">Fractures along a 45&deg; helicoidal plane due to maximum tensile normal stress</option>
+              <option value="higher_j">Provides a higher polar moment of inertia (J) and greater torque capacity</option>
+              <option value="kt_factor">Requires a torsional stress concentration factor (Kt) to find peak shear stress</option>
+            </select>
+          </div>
+
+          <div class="match-row">
+            <label for="match-3"><strong>3. Stepped shoulder with a sharp fillet radius</strong></label>
+            <select id="match-3" class="styled-select">
+              <option value="">-- Select consequence --</option>
+              <option value="shear_transverse">Shears along a transverse plane perpendicular to the longitudinal axis</option>
+              <option value="helix_45">Fractures along a 45&deg; helicoidal plane due to maximum tensile normal stress</option>
+              <option value="higher_j">Provides a higher polar moment of inertia (J) and greater torque capacity</option>
+              <option value="kt_factor">Requires a torsional stress concentration factor (Kt) to find peak shear stress</option>
+            </select>
+          </div>
+
+          <div class="match-row">
+            <label for="match-4"><strong>4. Hollow shaft replacing a solid shaft of equal mass</strong></label>
+            <select id="match-4" class="styled-select">
+              <option value="">-- Select consequence --</option>
+              <option value="shear_transverse">Shears along a transverse plane perpendicular to the longitudinal axis</option>
+              <option value="helix_45">Fractures along a 45&deg; helicoidal plane due to maximum tensile normal stress</option>
+              <option value="higher_j">Provides a higher polar moment of inertia (J) and greater torque capacity</option>
+              <option value="kt_factor">Requires a torsional stress concentration factor (Kt) to find peak shear stress</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="q-actions">
+          <button type="button" class="btn btn-primary" id="btn-submit-q2-1">Submit Matches</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-hint="hint-q2-1">Need a Hint?</button>
+        </div>
+
+        <div id="hint-q2-1" class="hint-box">
+          <strong>Hint:</strong> Under pure torsion, maximum shear stress acts on transverse cross-sections, while maximum tensile normal stress acts at 45&deg; to the shaft axis. Brittle materials are weak in tension; ductile materials yield in shear.
+        </div>
+
+        <div id="fb-q2-1" class="feedback-box" role="alert"></div>
+      </article>
+
+      <!-- Question 2.2: Dropdown Completion -->
+      <article class="question-card" id="q2-2-card">
+        <div class="q-header">
+          <span class="q-badge">Question 2.2 &bull; Dropdown Completion</span>
+          <span class="q-solved-tag" id="q2-2-status"></span>
+        </div>
+        <p>
+          Complete the inspection report regarding the hollow transmission tube (<span class="formula-note">D<sub>o</sub> = 60 mm</span>, <span class="formula-note">D<sub>i</sub> = 40 mm</span>) compared to a solid shaft of outer diameter <strong>60 mm</strong>:
+        </p>
+
+        <div class="cloze-paragraph">
+          &ldquo;In a circular shaft under pure torsion, shear stress varies
+          <label for="dd-1" class="sr-only">Shear stress variation</label>
+          <select id="dd-1" class="inline-select">
+            <option value="">[Select]</option>
+            <option value="linearly">linearly</option>
+            <option value="parabolically">parabolically</option>
+            <option value="exponentially">exponentially</option>
+          </select>
+          from zero at the center to a maximum at the outer surface. Because the central core carries very little stress, removing the inner 40 mm core reduces the shaft's weight by
+          <label for="dd-2" class="sr-only">Weight reduction percentage</label>
+          <select id="dd-2" class="inline-select">
+            <option value="">[Select]</option>
+            <option value="22.2%">22.2%</option>
+            <option value="44.4%">44.4%</option>
+            <option value="66.7%">66.7%</option>
+          </select>,
+          while reducing its torsional strength (maximum torque capacity) by only
+          <label for="dd-3" class="sr-only">Strength reduction percentage</label>
+          <select id="dd-3" class="inline-select">
+            <option value="">[Select]</option>
+            <option value="11.1%">11.1%</option>
+            <option value="19.8%">19.8%</option>
+            <option value="33.3%">33.3%</option>
+          </select>.&rdquo;
+        </div>
+
+        <div class="q-actions">
+          <button type="button" class="btn btn-primary" id="btn-submit-q2-2">Submit Report</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-hint="hint-q2-2">Need a Hint?</button>
+        </div>
+
+        <div id="hint-q2-2" class="hint-box">
+          <strong>Hint:</strong> Weight scales with cross-sectional area (<span class="formula-note">(D<sub>i</sub> / D<sub>o</sub>)&sup2;</span>), while polar moment of inertia <span class="formula-note">J</span> scales with the fourth power of diameter (<span class="formula-note">(D<sub>i</sub> / D<sub>o</sub>)&#8308;</span>).
+        </div>
+
+        <div id="fb-q2-2" class="feedback-box" role="alert"></div>
+      </article>
+
+      <!-- Room 2 Fragment Reward -->
+      <div id="room2-reward" class="fragment-reveal-panel" role="region" aria-label="Room 2 Completion Reward">
+        <h3>Room 2 Complete — Electrical Schematic Fragment 2 Recovered!</h3>
+        <p>You peeled a grease-stained schematic corner from the freight elevator brake housing.</p>
+        <div id="room2-frag-container"></div>
+        <button type="button" class="btn btn-success btn-back-map">Back to Map</button>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 6: ROOM 3 (THE ROOFTOP HVAC CONTROL ROOM)
+         ====================================================================== -->
+    <section id="screen-room3" class="screen" aria-labelledby="r3-title">
+      <div class="room-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <span class="tag">Room 3 of 3 &bull; Final Challenge</span>
+          <button type="button" class="btn btn-secondary btn-sm btn-back-map">Back to Map</button>
+        </div>
+        <h2 id="r3-title">The Rooftop HVAC Control Room</h2>
+        <p>
+          You reach the rooftop mechanical penthouse. The main exhaust turbine shaft sheared during the storm, and you must select a replacement solid steel shaft from the emergency spare rack to safely power the ventilation and exit hydraulics without yielding or excessive twist.
+        </p>
+        <div class="objective-banner">
+          <strong>Learning Objective:</strong> Design (size) a mechanical shaft against both strength (yield) and stiffness (angle of twist) failure criteria.
+        </div>
+      </div>
+
+      <!-- Question 3.1: Sequencing -->
+      <article class="question-card" id="q3-1-card">
+        <div class="q-header">
+          <span class="q-badge">Question 3.1 &bull; Design Sequencing</span>
+          <span class="q-solved-tag" id="q3-1-status"></span>
+        </div>
+        <p>
+          Arrange the engineering design steps in the correct logical order (1 to 4) to size a solid circular shaft subjected to both a <strong>maximum allowable shear stress</strong> (<span class="formula-note">&tau;<sub>allow</sub></span>) and a <strong>maximum allowable angle of twist</strong> (<span class="formula-note">&phi;<sub>allow</sub></span>). Use the Up/Down buttons to reorder.
+        </p>
+
+        <ul class="sequence-list" id="sequence-list" aria-label="Reorderable design steps">
+          <!-- Populated dynamically by JS -->
+        </ul>
+
+        <div class="q-actions">
+          <button type="button" class="btn btn-primary" id="btn-submit-q3-1">Verify Design Sequence</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-hint="hint-q3-1">Need a Hint?</button>
+        </div>
+
+        <div id="hint-q3-1" class="hint-box">
+          <strong>Hint:</strong> You must find the applied torque before calculating required diameters, and you cannot pick a single final stock diameter until both strength and stiffness minimums have been computed.
+        </div>
+
+        <div id="fb-q3-1" class="feedback-box" role="alert"></div>
+      </article>
+
+      <!-- Question 3.2: Multiple Choice -->
+      <article class="question-card" id="q3-2-card">
+        <div class="q-header">
+          <span class="q-badge">Question 3.2 &bull; Multiple Choice</span>
+          <span class="q-solved-tag" id="q3-2-status"></span>
+        </div>
+        <p>
+          The replacement solid steel shaft (<span class="formula-note">L = 2.0 m</span>, <span class="formula-note">G = 80 GPa</span>, <span class="formula-note">&tau;<sub>yield</sub> = 240 MPa</span>) must transmit a torque of <span class="formula-note">T = 2.5 kN&middot;m</span>. Design specifications require a <strong>Factor of Safety of 2.0</strong> against yielding and a maximum angle of twist not exceeding <strong>1.5&deg;</strong>. Which minimum standard shaft diameter from the spare rack satisfies <strong>both</strong> requirements?
+        </p>
+
+        <div class="option-list" id="q3-2-options">
+          <label class="option-label">
+            <input type="radio" name="q3-2" value="A" />
+            <span>A. 45 mm</span>
+          </label>
+          <label class="option-label">
+            <input type="radio" name="q3-2" value="B" />
+            <span>B. 50 mm</span>
+          </label>
+          <label class="option-label">
+            <input type="radio" name="q3-2" value="C" />
+            <span>C. 55 mm</span>
+          </label>
+          <label class="option-label">
+            <input type="radio" name="q3-2" value="D" />
+            <span>D. 60 mm</span>
+          </label>
+        </div>
+
+        <div class="q-actions">
+          <button type="button" class="btn btn-primary" id="btn-submit-q3-2">Install Shaft &amp; Engage Power</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-hint="hint-q3-2">Need a Hint?</button>
+        </div>
+
+        <div id="hint-q3-2" class="hint-box">
+          <strong>Hint:</strong> Remember to convert 1.5&deg; to radians (<span class="formula-note">1.5 &times; &pi; / 180</span>) and divide <span class="formula-note">&tau;<sub>yield</sub></span> by the Factor of Safety (2.0) to get <span class="formula-note">&tau;<sub>allow</sub> = 120 MPa</span>.
+        </div>
+
+        <div id="fb-q3-2" class="feedback-box" role="alert"></div>
+      </article>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 7: COMPLETION SCREEN
+         ====================================================================== -->
+    <section id="screen-completion" class="screen" aria-labelledby="comp-title">
+      <div class="start-hero">
+        <span class="tag" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border-color: var(--accent-green);">
+          Inspection Passed &bull; Exit Unlocked
+        </span>
+        <h1 id="comp-title" style="color: var(--accent-green);">Auxiliary Power Restored!</h1>
+        <p>
+          With the 60 mm replacement shaft installed on the rooftop turbine, the auxiliary generators hum to life. The atrium blast shutters retract and the main exit doors unlock—you have safely escaped Grandview Galleria!
+        </p>
+
+        <div class="summary-grid">
+          <div class="summary-stat">
+            <span class="val" id="comp-time">--:--</span>
+            <span>Time Remaining</span>
+          </div>
+          <div class="summary-stat">
+            <span class="val" id="comp-life">100</span>
+            <span>Remaining Life Points</span>
+          </div>
+          <div class="summary-stat">
+            <span class="val" id="comp-rooms">3 / 3</span>
+            <span>Zones Verified</span>
+          </div>
+        </div>
+
+        <div class="story-box" style="border-left-color: var(--accent-green);">
+          <strong>Engineering Competencies Verified:</strong>
+          <ul style="margin-left: 1.25rem; margin-top: 0.4rem; color: var(--text-secondary);">
+            <li>Calculated torsional shear stress from transmitted power and rotational speed.</li>
+            <li>Evaluated geometric and material effects on angle of twist (<span class="formula-note">&phi; = TL / JG</span>).</li>
+            <li>Contrasted solid vs. hollow shaft efficiency and ductile vs. brittle failure planes.</li>
+            <li>Sized a drive shaft simultaneously against yield strength and torsional stiffness limits.</li>
+          </ul>
+        </div>
+
+        <div class="center-actions">
+          <button type="button" id="btn-comp-restart" class="btn btn-primary">
+            Restart Escape Room
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SCREEN 8: GAME OVER SCREEN
+         ====================================================================== -->
+    <section id="screen-gameover" class="screen" aria-labelledby="go-title">
+      <div class="start-hero">
+        <span class="tag" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border-color: var(--accent-red);">
+          System Lockdown
+        </span>
+        <h1 id="go-title" style="color: var(--accent-red);">Inspection Failed</h1>
+        <p id="gameover-reason">
+          Your Life Points reached zero due to repeated calculation errors, triggering an automatic safety lockout.
+        </p>
+
+        <div class="center-actions">
+          <button type="button" id="btn-go-restart" class="btn btn-primary">
+            Restart Escape Room
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========================================================================
+       Audio Elements (Referenced from assets/ folder)
+       ======================================================================== -->
+  <audio id="audio-bgm" src="assets/background_music.mp3" loop preload="auto"></audio>
+  <audio id="audio-correct" src="assets/correct.mp3" preload="auto"></audio>
+  <audio id="audio-incorrect" src="assets/incorrect.mp3" preload="auto"></audio>
+  <audio id="audio-doc" src="assets/document_found.mp3" preload="auto"></audio>
+  <audio id="audio-unlock" src="assets/door_unlock.mp3" preload="auto"></audio>
+
+  <script>
+    /* ========================================================================
+       Game State & Configuration
+       ======================================================================== */
+    const INITIAL_TIME_SECONDS = 20 * 60; // 20 minutes
+    const INITIAL_LIFE = 100;
+    const PENALTY_POINTS = 10;
+    const UNLOCK_CODE = "4819";
+
+    const INITIAL_SEQUENCE_ITEMS = [
+      {
+        id: "step3",
+        text: "Calculate the minimum required diameter (d₂) based on the torsional stiffness criterion using d₂ = (32TL / (πGφ_allow))^(1/4)."
+      },
+      {
+        id: "step1",
+        text: "Determine the design torque (T) from the transmitted power and operating angular velocity (T = P / ω)."
+      },
+      {
+        id: "step4",
+        text: "Select the final shaft diameter by choosing the larger of d₁ and d₂ and rounding up to the nearest standard stock size."
+      },
+      {
+        id: "step2",
+        text: "Calculate the minimum required diameter (d₁) based on the shear strength criterion using d₁ = (16T / (πτ_allow))^(1/3)."
+      }
+    ];
+
+    let state = {};
+
+    function resetStateObject() {
+      state = {
+        currentScreen: "screen-start",
+        timeRemaining: INITIAL_TIME_SECONDS,
+        timerInterval: null,
+        lifePoints: INITIAL_LIFE,
+        muted: false,
+        audioActivated: false,
+        gameOver: false,
+        completed: false,
+        questions: {
+          "q1-1": false,
+          "q1-2": false,
+          "q2-1": false,
+          "q2-2": false,
+          "q3-1": false,
+          "q3-2": false
+        },
+        room1Done: false,
+        room2Done: false,
+        room3Unlocked: false,
+        room3Done: false,
+        sequenceOrder: INITIAL_SEQUENCE_ITEMS.map(item => ({ ...item }))
+      };
+    }
+
+    /* ========================================================================
+       Audio Manager (Gracefully handles missing local files without crashing)
+       ======================================================================== */
+    const audios = {
+      bgm: document.getElementById("audio-bgm"),
+      correct: document.getElementById("audio-correct"),
+      incorrect: document.getElementById("audio-incorrect"),
+      doc: document.getElementById("audio-doc"),
+      unlock: document.getElementById("audio-unlock")
+    };
+
+    function activateAudio() {
+      state.audioActivated = true;
+      if (!state.muted && audios.bgm) {
+        audios.bgm.volume = 0.35;
+        audios.bgm.play().catch(() => {
+          // Autoplay or missing local file handled silently
+        });
+      }
+    }
+
+    function playSound(key) {
+      if (state.muted || !audios[key]) return;
+      try {
+        audios[key].currentTime = 0;
+        audios[key].play().catch(() => {});
+      } catch (e) {
+        // Ignore audio playback errors if file is not yet placed in assets/
+      }
+    }
+
+    function toggleMute() {
+      state.muted = !state.muted;
+      const muteBtn = document.getElementById("btn-mute");
+      muteBtn.textContent = state.muted ? "Sound: Off" : "Sound: On";
+      muteBtn.setAttribute("aria-pressed", String(state.muted));
+
+      if (state.muted) {
+        audios.bgm.pause();
+      } else if (state.audioActivated && !state.gameOver) {
+        audios.bgm.play().catch(() => {});
+      }
+    }
+
+    /* ========================================================================
+       Screen Navigation & Background Management
+       ======================================================================== */
+    const SCREEN_BACKGROUNDS = {
+      "screen-start": "assets/cover.png",
+      "screen-instructions": "assets/cover.png",
+      "screen-map": "assets/cover.png",
+      "screen-room1": "assets/room1.png",
+      "screen-room2": "assets/room2.png",
+      "screen-room3": "assets/room3.png",
+      "screen-completion": "assets/cover.png",
+      "screen-gameover": "assets/cover.png"
+    };
+
+    function showScreen(screenId) {
+      state.currentScreen = screenId;
+
+      document.querySelectorAll(".screen").forEach(sec => {
+        sec.classList.remove("active");
+      });
+
+      const target = document.getElementById(screenId);
+      if (target) {
+        target.classList.add("active");
+      }
+
+      // Show HUD on all screens except Start
+      const hud = document.getElementById("hud-bar");
+      if (screenId === "screen-start") {
+        hud.classList.add("hidden");
+      } else {
+        hud.classList.remove("hidden");
+      }
+
+      // Update background image
+      const bgPath = SCREEN_BACKGROUNDS[screenId] || "assets/cover.png";
+      document.body.style.backgroundImage = `url('${bgPath}')`;
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function announce(message) {
+      const el = document.getElementById("sr-announcer");
+      el.textContent = "";
+      setTimeout(() => {
+        el.textContent = message;
+      }, 50);
+    }
+
+    /* ========================================================================
+       Timer, Life Points & HUD Updates
+       ======================================================================== */
+    function formatTime(totalSeconds) {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+
+    function startTimer() {
+      stopTimer();
+      state.timerInterval = setInterval(() => {
+        if (state.gameOver || state.completed) {
+          stopTimer();
+          return;
+        }
+        state.timeRemaining--;
+        updateHUD();
+
+        if (state.timeRemaining <= 0) {
+          state.timeRemaining = 0;
+          updateHUD();
+          triggerGameOver("The 20-minute inspection window expired before auxiliary power could be restored.");
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+      }
+    }
+
+    function deductLifePoints() {
+      state.lifePoints = Math.max(0, state.lifePoints - PENALTY_POINTS);
+      updateHUD();
+      playSound("incorrect");
+
+      if (state.lifePoints <= 0) {
+        triggerGameOver("Your Life Points reached zero due to repeated calculation errors, triggering a safety lockout.");
+      }
+    }
+
+    function updateHUD() {
+      const timerEl = document.getElementById("hud-timer");
+      timerEl.textContent = formatTime(state.timeRemaining);
+      timerEl.className = "stat-value";
+      if (state.timeRemaining <= 120) {
+        timerEl.classList.add("danger");
+      } else if (state.timeRemaining <= 300) {
+        timerEl.classList.add("warning");
+      }
+
+      const lifeEl = document.getElementById("hud-life");
+      lifeEl.textContent = state.lifePoints;
+      lifeEl.className = "stat-value";
+      if (state.lifePoints <= 30) {
+        lifeEl.classList.add("danger");
+      } else if (state.lifePoints <= 60) {
+        lifeEl.classList.add("warning");
+      }
+
+      const completedRoomsCount = [state.room1Done, state.room2Done, state.room3Done].filter(Boolean).length;
+      const pct = Math.round((completedRoomsCount / 3) * 100);
+      document.getElementById("hud-progress-text").textContent = `${completedRoomsCount}/3 Rooms`;
+      document.getElementById("hud-progress-fill").style.width = `${pct}%`;
+      document.getElementById("hud-progress-bar").setAttribute("aria-valuenow", String(pct));
+    }
+
+    function triggerGameOver(reason) {
+      state.gameOver = true;
+      stopTimer();
+      audios.bgm.pause();
+      document.getElementById("gameover-reason").textContent = reason;
+      showScreen("screen-gameover");
+      announce("Game Over. " + reason);
+    }
+
+    /* ========================================================================
+       Image Helper with Accessible Fallback if Local Image Missing
+       ======================================================================== */
+    function createFragmentImageElement(src, altText, fallbackHtml) {
+      const wrapper = document.createElement("div");
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = altText;
+      img.className = "fragment-img";
+
+      img.onerror = function () {
+        wrapper.innerHTML = `<div class="img-fallback-box" role="img" aria-label="${altText}">${fallbackHtml}</div>`;
+      };
+
+      wrapper.appendChild(img);
+      return wrapper;
+    }
+
+    /* ========================================================================
+       Map & Document Reconstruction Updates
+       ======================================================================== */
+    function refreshMapUI() {
+      // Room 1 Card
+      const r1Card = document.getElementById("card-room1");
+      const r1Status = document.getElementById("status-room1");
+      const r1Btn = document.getElementById("btn-enter-room1");
+      if (state.room1Done) {
+        r1Card.classList.add("completed");
+        r1Status.textContent = "Completed (Fragment 1 Collected)";
+        r1Status.className = "room-status status-done";
+        r1Btn.textContent = "Review Room 1";
+        r1Btn.className = "btn btn-secondary";
+      } else {
+        r1Card.classList.remove("completed");
+        r1Status.textContent = "Accessible";
+        r1Status.className = "room-status status-open";
+        r1Btn.textContent = "Enter Room 1";
+        r1Btn.className = "btn btn-primary";
+      }
+
+      // Room 2 Card
+      const r2Card = document.getElementById("card-room2");
+      const r2Status = document.getElementById("status-room2");
+      const r2Btn = document.getElementById("btn-enter-room2");
+      if (state.room2Done) {
+        r2Card.classList.add("completed");
+        r2Status.textContent = "Completed (Fragment 2 Collected)";
+        r2Status.className = "room-status status-done";
+        r2Btn.textContent = "Review Room 2";
+        r2Btn.className = "btn btn-secondary";
+      } else {
+        r2Card.classList.remove("completed");
+        r2Status.textContent = "Accessible";
+        r2Status.className = "room-status status-open";
+        r2Btn.textContent = "Enter Room 2";
+        r2Btn.className = "btn btn-primary";
+      }
+
+      // Room 3 Card
+      const r3Card = document.getElementById("card-room3");
+      const r3Status = document.getElementById("status-room3");
+      const r3Btn = document.getElementById("btn-enter-room3");
+      if (state.room3Done) {
+        r3Card.classList.remove("locked");
+        r3Card.classList.add("completed");
+        r3Status.textContent = "Completed";
+        r3Status.className = "room-status status-done";
+        r3Btn.disabled = false;
+        r3Btn.textContent = "Review Room 3";
+        r3Btn.className = "btn btn-secondary";
+      } else if (state.room3Unlocked) {
+        r3Card.classList.remove("locked");
+        r3Status.textContent = "Unlocked — Ready for Final Challenge";
+        r3Status.className = "room-status status-open";
+        r3Btn.disabled = false;
+        r3Btn.textContent = "Enter Room 3";
+        r3Btn.className = "btn btn-primary";
+      } else {
+        r3Card.classList.add("locked");
+        r3Card.classList.remove("completed");
+        r3Status.textContent = "Locked (Requires 4-Digit Code)";
+        r3Status.className = "room-status status-locked";
+        r3Btn.disabled = true;
+        r3Btn.textContent = "Locked";
+        r3Btn.className = "btn btn-secondary";
+      }
+
+      // Document Fragments Workbench
+      const stage = document.getElementById("fragments-stage");
+      const slot1 = document.getElementById("slot-frag1");
+      const slot2 = document.getElementById("slot-frag2");
+      const accessibleClue = document.getElementById("accessible-clue-box");
+
+      slot1.innerHTML = "";
+      if (state.room1Done) {
+        slot1.appendChild(
+          createFragmentImageElement(
+            "assets/fragment1.png",
+            "Torn maintenance log left fragment showing code prefix 48",
+            "<strong>Fragment 1</strong><br>Unit #4 Log<br>Prefix: <b>48</b>__"
+          )
+        );
+      } else {
+        slot1.innerHTML = "<span>Fragment 1 Missing (Complete Room 1)</span>";
+      }
+
+      slot2.innerHTML = "";
+      if (state.room2Done) {
+        slot2.appendChild(
+          createFragmentImageElement(
+            "assets/fragment2.png",
+            "Torn electrical schematic right fragment showing code suffix 19",
+            "<strong>Fragment 2</strong><br>Sub-Panel B<br>Suffix: __<b>19</b>"
+          )
+        );
+      } else {
+        slot2.innerHTML = "<span>Fragment 2 Missing (Complete Room 2)</span>";
+      }
+
+      // Join fragments visually & reveal accessible text equivalent ONLY when both are collected
+      if (state.room1Done && state.room2Done) {
+        stage.classList.add("joined");
+        accessibleClue.style.display = "block";
+      } else {
+        stage.classList.remove("joined");
+        accessibleClue.style.display = "none";
+      }
+    }
+
+    /* ========================================================================
+       Question Feedback & Room Completion Logic
+       ======================================================================== */
+    function showQuestionFeedback(fbId, isCorrect, htmlMessage) {
+      const fb = document.getElementById(fbId);
+      fb.className = `feedback-box visible ${isCorrect ? "correct" : "incorrect"}`;
+      fb.innerHTML = htmlMessage;
+    }
+
+    function markQuestionSolved(qKey) {
+      state.questions[qKey] = true;
+      document.getElementById(`${qKey}-card`).classList.add("solved");
+      document.getElementById(`${qKey}-status`).textContent = "Verified";
+      playSound("correct");
+      checkRoomCompletion();
+    }
+
+    function checkRoomCompletion() {
+      // Check Room 1
+      if (!state.room1Done && state.questions["q1-1"] && state.questions["q1-2"]) {
+        state.room1Done = true;
+        playSound("doc");
+        const rewardPanel = document.getElementById("room1-reward");
+        const container = document.getElementById("room1-frag-container");
+        container.innerHTML = "";
+        container.appendChild(
+          createFragmentImageElement(
+            "assets/fragment1.png",
+            "Torn maintenance log fragment 1",
+            "<strong>Document Fragment 1</strong><br>Escalator Drive Unit #4<br>Prefix: <b>48</b>__"
+          )
+        );
+        rewardPanel.classList.add("visible");
+        updateHUD();
+        refreshMapUI();
+        announce("Room 1 completed! Document Fragment 1 collected.");
+      }
+
+      // Check Room 2
+      if (!state.room2Done && state.questions["q2-1"] && state.questions["q2-2"]) {
+        state.room2Done = true;
+        playSound("doc");
+        const rewardPanel = document.getElementById("room2-reward");
+        const container = document.getElementById("room2-frag-container");
+        container.innerHTML = "";
+        container.appendChild(
+          createFragmentImageElement(
+            "assets/fragment2.png",
+            "Torn electrical schematic fragment 2",
+            "<strong>Document Fragment 2</strong><br>Electrical Sub-Panel B<br>Suffix: __<b>19</b>"
+          )
+        );
+        rewardPanel.classList.add("visible");
+        updateHUD();
+        refreshMapUI();
+        announce("Room 2 completed! Document Fragment 2 collected.");
+      }
+
+      // Check Room 3 (Final Escape)
+      if (!state.room3Done && state.questions["q3-1"] && state.questions["q3-2"]) {
+        state.room3Done = true;
+        state.completed = true;
+        stopTimer();
+        updateHUD();
+        refreshMapUI();
+
+        document.getElementById("comp-time").textContent = formatTime(state.timeRemaining);
+        document.getElementById("comp-life").textContent = state.lifePoints;
+        document.getElementById("comp-rooms").textContent = "3 / 3";
+
+        setTimeout(() => {
+          showScreen("screen-completion");
+          announce("Congratulations! All zones verified and you have escaped Grandview Galleria.");
+        }, 1400);
+      }
+    }
+
+    /* ========================================================================
+       Question Validation Handlers
+       ======================================================================== */
+    // Q1.1: Short Text Answer (Accepted range: 94.8 to 95.0, optional "MPa")
+    document.getElementById("btn-submit-q1-1").addEventListener("click", () => {
+      if (state.questions["q1-1"]) return;
+      const raw = document.getElementById("q1-1-input").value.trim().toLowerCase();
+      const cleaned = raw.replace(/mpa/g, "").trim();
+      const val = parseFloat(cleaned);
+
+      if (!isNaN(val) && val >= 94.8 && val <= 95.0) {
+        document.getElementById("q1-1-input").disabled = true;
+        document.getElementById("btn-submit-q1-1").disabled = true;
+        showQuestionFeedback(
+          "fb-q1-1",
+          true,
+          `<strong>Correct (94.9 MPa)!</strong> Torque is found using <span class="formula-note">T = P / &omega; = 15,000 / (120 &times; 2&pi;/60) &approx; 1193.66 N&middot;m</span>. Using the torsion formula <span class="formula-note">&tau;<sub>max</sub> = 16T / (&pi;d&sup3;) = 16(1193.66) / (&pi;(0.04)&sup3;)</span>, the maximum shear stress is <strong>94.9 MPa</strong>.`
+        );
+        markQuestionSolved("q1-1");
+      } else {
+        deductLifePoints();
+        showQuestionFeedback(
+          "fb-q1-1",
+          false,
+          `<strong>Incorrect (-10 Life Points).</strong> Check your unit conversions: convert power to Watts (<span class="formula-note">15,000 W</span>), diameter to meters (<span class="formula-note">0.04 m</span>), and speed from rpm to rad/s (<span class="formula-note">&omega; = 2&pi;N / 60</span>) before applying <span class="formula-note">&tau;<sub>max</sub> = 16T / (&pi;d&sup3;)</span>.`
+        );
+      }
+    });
+
+    // Q1.2: Multiple Selection (B and C)
+    document.getElementById("btn-submit-q1-2").addEventListener("click", () => {
+      if (state.questions["q1-2"]) return;
+      const checked = Array.from(document.querySelectorAll('input[name="q1-2"]:checked')).map(el => el.value).sort();
+
+      if (checked.length === 2 && checked[0] === "B" && checked[1] === "C") {
+        document.querySelectorAll('input[name="q1-2"]').forEach(el => (el.disabled = true));
+        document.getElementById("btn-submit-q1-2").disabled = true;
+        showQuestionFeedback(
+          "fb-q1-2",
+          true,
+          `<strong>Correct (B and C)!</strong> From <span class="formula-note">&phi; = TL / (JG)</span>, the angle of twist is directly proportional to length (<span class="formula-note">L</span>) and inversely proportional to polar moment of inertia (<span class="formula-note">J</span>) and shear modulus (<span class="formula-note">G</span>). Increasing diameter increases <span class="formula-note">J</span> (proportional to <span class="formula-note">d&#8308;</span>), and shortening <span class="formula-note">L</span> directly reduces <span class="formula-note">&phi;</span>. Switching to aluminum lowers <span class="formula-note">G</span> (increasing twist), and removing core material lowers <span class="formula-note">J</span> (increasing twist).`
+        );
+        markQuestionSolved("q1-2");
+      } else {
+        deductLifePoints();
+        showQuestionFeedback(
+          "fb-q1-2",
+          false,
+          `<strong>Incorrect (-10 Life Points).</strong> Remember <span class="formula-note">&phi; = TL / (JG)</span>. Selecting options that decrease <span class="formula-note">G</span> (switching to aluminum) or decrease <span class="formula-note">J</span> (boring a hole) will <em>increase</em> twist rather than reduce it.`
+        );
+      }
+    });
+
+    // Q2.1: Matching
+    document.getElementById("btn-submit-q2-1").addEventListener("click", () => {
+      if (state.questions["q2-1"]) return;
+      const m1 = document.getElementById("match-1").value;
+      const m2 = document.getElementById("match-2").value;
+      const m3 = document.getElementById("match-3").value;
+      const m4 = document.getElementById("match-4").value;
+
+      if (m1 === "helix_45" && m2 === "shear_transverse" && m3 === "kt_factor" && m4 === "higher_j") {
+        ["match-1", "match-2", "match-3", "match-4"].forEach(id => (document.getElementById(id).disabled = true));
+        document.getElementById("btn-submit-q2-1").disabled = true;
+        showQuestionFeedback(
+          "fb-q2-1",
+          true,
+          `<strong>All Matches Correct!</strong> Ductile materials fail in shear along planes of maximum shear stress (transverse plane), whereas brittle materials fail in tension along planes of maximum principal tensile stress (45&deg; helix). Hollow shafts distribute material further from the neutral axis, maximizing <span class="formula-note">J</span> per unit mass.`
+        );
+        markQuestionSolved("q2-1");
+      } else {
+        deductLifePoints();
+        showQuestionFeedback(
+          "fb-q2-1",
+          false,
+          `<strong>Incorrect (-10 Life Points).</strong> One or more matches are incorrect. Review how ductile vs. brittle materials fail under pure torsion and how geometric discontinuities affect local peak stresses.`
+        );
+      }
+    });
+
+    // Q2.2: Dropdown Completion (linearly, 44.4%, 19.8%)
+    document.getElementById("btn-submit-q2-2").addEventListener("click", () => {
+      if (state.questions["q2-2"]) return;
+      const d1 = document.getElementById("dd-1").value;
+      const d2 = document.getElementById("dd-2").value;
+      const d3 = document.getElementById("dd-3").value;
+
+      if (d1 === "linearly" && d2 === "44.4%" && d3 === "19.8%") {
+        ["dd-1", "dd-2", "dd-3"].forEach(id => (document.getElementById(id).disabled = true));
+        document.getElementById("btn-submit-q2-2").disabled = true;
+        showQuestionFeedback(
+          "fb-q2-2",
+          true,
+          `<strong>Correct!</strong> Shear stress follows <span class="formula-note">&tau; = T&rho; / J</span> (linear with radius <span class="formula-note">&rho;</span>). Weight reduction equals the area ratio <span class="formula-note">(D<sub>i</sub> / D<sub>o</sub>)&sup2; = (40/60)&sup2; = 44.4%</span>. Strength reduction equals the polar moment ratio <span class="formula-note">(D<sub>i</sub> / D<sub>o</sub>)&#8308; = (40/60)&#8308; = 19.8%</span>.`
+        );
+        markQuestionSolved("q2-2");
+      } else {
+        deductLifePoints();
+        showQuestionFeedback(
+          "fb-q2-2",
+          false,
+          `<strong>Incorrect (-10 Life Points).</strong> Check the ratios for <span class="formula-note">D<sub>i</sub> = 40 mm</span> and <span class="formula-note">D<sub>o</sub> = 60 mm</span>: Area scales with <span class="formula-note">D&sup2;</span>, whereas polar moment of inertia <span class="formula-note">J</span> scales with <span class="formula-note">D&#8308;</span>.`
+        );
+      }
+    });
+
+    // Q3.1: Sequencing
+    function renderSequenceList() {
+      const list = document.getElementById("sequence-list");
+      list.innerHTML = "";
+      state.sequenceOrder.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.className = "sequence-item";
+        li.innerHTML = `
+          <div>
+            <span class="seq-num">${index + 1}.</span>
+            <span>${item.text}</span>
+          </div>
+          <div class="seq-controls">
+            <button type="button" class="btn btn-secondary btn-sm seq-up" data-idx="${index}" aria-label="Move step ${index + 1} up" ${index === 0 || state.questions["q3-1"] ? "disabled" : ""}>&uarr;</button>
+            <button type="button" class="btn btn-secondary btn-sm seq-down" data-idx="${index}" aria-label="Move step ${index + 1} down" ${index === state.sequenceOrder.length - 1 || state.questions["q3-1"] ? "disabled" : ""}>&darr;</button>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+
+      list.querySelectorAll(".seq-up").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.idx);
+          if (idx > 0) {
+            const temp = state.sequenceOrder[idx - 1];
+            state.sequenceOrder[idx - 1] = state.sequenceOrder[idx];
+            state.sequenceOrder[idx] = temp;
+            renderSequenceList();
+          }
+        });
+      });
+
+      list.querySelectorAll(".seq-down").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.idx);
+          if (idx < state.sequenceOrder.length - 1) {
+            const temp = state.sequenceOrder[idx + 1];
+            state.sequenceOrder[idx + 1] = state.sequenceOrder[idx];
+            state.sequenceOrder[idx] = temp;
+            renderSequenceList();
+          }
+        });
+      });
+    }
+
+    document.getElementById("btn-submit-q3-1").addEventListener("click", () => {
+      if (state.questions["q3-1"]) return;
+      const currentIds = state.sequenceOrder.map(item => item.id);
+      const isCorrect =
+        currentIds[0] === "step1" &&
+        currentIds[1] === "step2" &&
+        currentIds[2] === "step3" &&
+        currentIds[3] === "step4";
+
+      if (isCorrect) {
+        document.getElementById("btn-submit-q3-1").disabled = true;
+        showQuestionFeedback(
+          "fb-q3-1",
+          true,
+          `<strong>Correct Design Sequence!</strong> Both failure criteria must be satisfied simultaneously. Choosing the larger diameter ensures that neither the allowable stress nor the allowable twist limit is exceeded.`
+        );
+        markQuestionSolved("q3-1");
+        renderSequenceList();
+      } else {
+        deductLifePoints();
+        showQuestionFeedback(
+          "fb-q3-1",
+          false,
+          `<strong>Incorrect Order (-10 Life Points).</strong> Start by finding the design torque (<span class="formula-note">T</span>), then determine the strength-limited diameter (<span class="formula-note">d<sub>1</sub></span>), then the stiffness-limited diameter (<span class="formula-note">d<sub>2</sub></span>), and finally select the larger governing diameter.`
+        );
+      }
+    });
+
+    // Q3.2: Multiple Choice (D. 60 mm)
+    document.getElementById("btn-submit-q3-2").addEventListener("click", () => {
+      if (state.questions["q3-2"]) return;
+      const selected = document.querySelector('input[name="q3-2"]:checked');
+      if (!selected) {
+        showQuestionFeedback("fb-q3-2", false, "Please select a standard shaft diameter before submitting.");
+        return;
+      }
+
+      if (selected.value === "D") {
+        document.querySelectorAll('input[name="q3-2"]').forEach(el => (el.disabled = true));
+        document.getElementById("btn-submit-q3-2").disabled = true;
+        showQuestionFeedback(
+          "fb-q3-2",
+          true,
+          `<strong>Correct (D. 60 mm)!</strong><br>
+          &bull; <strong>Strength requirement:</strong> <span class="formula-note">&tau;<sub>allow</sub> = 240 / 2.0 = 120 MPa</span>. Thus, <span class="formula-note">d<sub>1</sub> = (16 &times; 2500 / (&pi; &times; 120 &times; 10&#8310;))<sup>1/3</sup> = 0.0473 m = 47.3 mm</span>.<br>
+          &bull; <strong>Stiffness requirement:</strong> <span class="formula-note">&phi;<sub>allow</sub> = 1.5&deg; &times; (&pi;/180) = 0.02618 rad</span>. Thus, <span class="formula-note">d<sub>2</sub> = (32 &times; 2500 &times; 2.0 / (&pi; &times; 80 &times; 10&#8313; &times; 0.02618))<sup>1/4</sup> = 0.0591 m = 59.1 mm</span>.<br>
+          &bull; Rounding up from 59.1 mm to the next standard stock size gives <strong>60 mm</strong>.`
+        );
+        markQuestionSolved("q3-2");
+      } else {
+        deductLifePoints();
+        showQuestionFeedback(
+          "fb-q3-2",
+          false,
+          `<strong>Incorrect (-10 Life Points).</strong> A ${selected.value === "A" ? "45 mm" : selected.value === "B" ? "50 mm" : "55 mm"} shaft will exceed the maximum allowable angle of twist of 1.5&deg; (<span class="formula-note">d<sub>2</sub> = 59.1 mm</span> is required for stiffness).`
+        );
+      }
+    });
+
+    /* ========================================================================
+       Keypad Unlock Handler for Room 3
+       ======================================================================== */
+    document.getElementById("code-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const feedback = document.getElementById("keypad-feedback");
+      const entered = document.getElementById("keypad-input").value.trim();
+
+      if (!(state.room1Done && state.room2Done)) {
+        feedback.style.color = "var(--accent-amber)";
+        feedback.textContent = "Security Lockout: You must collect both document fragments from Rooms 1 and 2 before entering the code.";
+        return;
+      }
+
+      if (entered === UNLOCK_CODE) {
+        state.room3Unlocked = true;
+        playSound("unlock");
+        feedback.style.color = "var(--accent-green)";
+        feedback.textContent = "Code 4819 Accepted! Room 3 (Rooftop HVAC Control Room) is now unlocked.";
+        document.getElementById("keypad-input").disabled = true;
+        document.getElementById("btn-unlock-room3").disabled = true;
+        refreshMapUI();
+        announce("Room 3 unlocked.");
+      } else {
+        feedback.style.color = "var(--accent-red)";
+        feedback.textContent = "Invalid Code. Join Fragment 1 and Fragment 2 above to read the 4-digit override code.";
+      }
+    });
+
+    /* ========================================================================
+       Hint Toggle Buttons
+       ======================================================================== */
+    document.querySelectorAll("[data-hint]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const hintEl = document.getElementById(btn.dataset.hint);
+        if (hintEl) {
+          hintEl.classList.toggle("visible");
+        }
+      });
+    });
+
+    /* ========================================================================
+       Global Navigation & Restart Reset Logic
+       ======================================================================== */
+    function resetFullGame() {
+      stopTimer();
+      resetStateObject();
+
+      // Reset all inputs, selects, buttons, feedback, and reward panels
+      document.getElementById("q1-1-input").value = "";
+      document.getElementById("q1-1-input").disabled = false;
+      document.getElementById("btn-submit-q1-1").disabled = false;
+
+      document.querySelectorAll('input[name="q1-2"]').forEach(el => {
+        el.checked = false;
+        el.disabled = false;
+      });
+      document.getElementById("btn-submit-q1-2").disabled = false;
+
+      ["match-1", "match-2", "match-3", "match-4", "dd-1", "dd-2", "dd-3"].forEach(id => {
+        const el = document.getElementById(id);
+        el.value = "";
+        el.disabled = false;
+      });
+      document.getElementById("btn-submit-q2-1").disabled = false;
+      document.getElementById("btn-submit-q2-2").disabled = false;
+
+      document.getElementById("btn-submit-q3-1").disabled = false;
+
+      document.querySelectorAll('input[name="q3-2"]').forEach(el => {
+        el.checked = false;
+        el.disabled = false;
+      });
+      document.getElementById("btn-submit-q3-2").disabled = false;
+
+      // Clear solved styling, feedback boxes, and hints
+      document.querySelectorAll(".question-card").forEach(c => c.classList.remove("solved"));
+      document.querySelectorAll(".q-solved-tag").forEach(t => (t.textContent = ""));
+      document.querySelectorAll(".feedback-box").forEach(fb => {
+        fb.className = "feedback-box";
+        fb.innerHTML = "";
+      });
+      document.querySelectorAll(".hint-box").forEach(hb => hb.classList.remove("visible"));
+      document.querySelectorAll(".fragment-reveal-panel").forEach(rp => rp.classList.remove("visible"));
+
+      // Reset keypad
+      const kp = document.getElementById("keypad-input");
+      kp.value = "";
+      kp.disabled = false;
+      document.getElementById("btn-unlock-room3").disabled = false;
+      document.getElementById("keypad-feedback").textContent = "";
+
+      // Reset Mute button
+      const muteBtn = document.getElementById("btn-mute");
+      muteBtn.textContent = "Sound: On";
+      muteBtn.setAttribute("aria-pressed", "false");
+
+      renderSequenceList();
+      updateHUD();
+      refreshMapUI();
+      showScreen("screen-start");
+    }
+
+    // Event Listeners for Navigation
+    document.getElementById("btn-start").addEventListener("click", () => {
+      activateAudio();
+      startTimer();
+      showScreen("screen-instructions");
+    });
+
+    document.getElementById("btn-to-map").addEventListener("click", () => {
+      showScreen("screen-map");
+    });
+
+    document.getElementById("btn-enter-room1").addEventListener("click", () => {
+      showScreen("screen-room1");
+    });
+
+    document.getElementById("btn-enter-room2").addEventListener("click", () => {
+      showScreen("screen-room2");
+    });
+
+    document.getElementById("btn-enter-room3").addEventListener("click", () => {
+      if (state.room3Unlocked) {
+        showScreen("screen-room3");
+      }
+    });
+
+    document.querySelectorAll(".btn-back-map").forEach(btn => {
+      btn.addEventListener("click", () => {
+        refreshMapUI();
+        showScreen("screen-map");
+      });
+    });
+
+    document.getElementById("btn-mute").addEventListener("click", toggleMute);
+    document.getElementById("btn-hud-restart").addEventListener("click", resetFullGame);
+    document.getElementById("btn-comp-restart").addEventListener("click", resetFullGame);
+    document.getElementById("btn-go-restart").addEventListener("click", resetFullGame);
+
+    // Initialize game on page load
+    resetFullGame();
+  </script>
+</body>
+</html>
